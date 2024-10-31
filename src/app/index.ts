@@ -4,22 +4,22 @@ import { expressMiddleware } from '@apollo/server/express4';
 import bodyParser from "body-parser";
 import { prismaClient } from "../clients/db";
 
+import { User } from "./user";
+
 export const initServer = async() => {
     const app = express();
     app.use(bodyParser.json());
 
     const graphqlServer = new ApolloServer({
         typeDefs:`
+            ${User.types}
             type Query {
-                sayHello : String
-                greet(name: String!): String!
+                ${User.queries}
             }
         `,
         resolvers: {
             Query: {
-                sayHello: () =>`Hello from graphQl`,
-                greet: (parent: any, {name}:{name:string}) => `Hello mr. ${name}, how are you?`
-                
+                ...User.resolvers.queries
             }
         },
     });
