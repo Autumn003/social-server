@@ -25,5 +25,13 @@ class JWTService {
             return token;
         });
     }
+    static decodeToken(token) {
+        try {
+            return jsonwebtoken_1.default.verify(token, JWTSeret);
+        }
+        catch (error) {
+            return null;
+        }
+    }
 }
 exports.default = JWTService;
