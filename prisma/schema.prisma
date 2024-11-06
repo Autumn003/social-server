@@ -20,10 +20,23 @@ model User {
   lastName        String?
   profileImageURL String?
 
+  followers  Follows[] @relation("follower")
+  followings Follows[] @relation("following")
+
   tweets Tweet[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Follows {
+  followerId String
+  follower   User   @relation("follower", fields: [followerId], references: [id])
+
+  followingId String
+  following   User   @relation("following", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
 }
 
 model Tweet {

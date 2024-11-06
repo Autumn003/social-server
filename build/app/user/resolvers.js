@@ -30,9 +30,45 @@ const queries = {
     }),
     getUserById: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { id }, ctx) { return user_1.default.getUserById(id); })
 };
+const mutations = {
+    followUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
+        var _b;
+        const from = (_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id;
+        if (!from)
+            throw new Error("Unauthenticated!");
+        yield user_1.default.followUser(from, to);
+        return true;
+    }),
+    unfollowUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
+        var _b;
+        const from = (_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id;
+        if (!from)
+            throw new Error("Unauthenticated!");
+        yield user_1.default.unfollowUser(from, to);
+        return true;
+    })
+};
 const extraResolvers = {
     User: {
-        tweets: (parent) => __awaiter(void 0, void 0, void 0, function* () { return yield db_1.prismaClient.tweet.findMany({ where: { author: { id: parent.id } } }); })
+        tweets: (parent) => __awaiter(void 0, void 0, void 0, function* () { return yield db_1.prismaClient.tweet.findMany({ where: { author: { id: parent.id } } }); }),
+        followers: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield db_1.prismaClient.follows.findMany({
+                where: { following: { id: parent.id } },
+                include: {
+                    follower: true,
+                },
+            });
+            return res.map((follow) => follow.follower);
+        }),
+        followings: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const res = yield db_1.prismaClient.follows.findMany({
+                where: { follower: { id: parent.id } },
+                include: {
+                    following: true,
+                },
+            });
+            return res.map((follow) => follow.following);
+        }),
     }
 };
-exports.resolvers = { queries, extraResolvers };
+exports.resolvers = { queries, mutations, extraResolvers };

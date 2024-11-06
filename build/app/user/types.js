@@ -11,6 +11,9 @@ exports.types = `#graphql
         profileImageURL: String
         createdAt: Date
 
+        followers: [User]
+        followings: [User]
+
         tweets: [Tweet]
     }
 `;
