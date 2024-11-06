@@ -1,24 +1,20 @@
 import { Tweet } from "@prisma/client";
-import { prismaClient } from "../../clients/db";
 import { graphqlContext } from "../../interfaces";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import UserService from "../../services/user";
+import tweetService, { CreateTweetPayload } from "../../services/tweet";
 
-export interface CreateTweetPayload {
-    content: string;
-    imageURL?: string;
-  }
+
 
 const s3Client = new S3Client({
-  region: 'ap-south-1',
-  credentials: {
-    accessKeyId: process.env.AWS_S3_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_S3_ACCESS_KEY_SECRET || "",
-  }
+  region: process.env.AWS_DEFAULT_REGION,
+  // no need to pass the credentials, because we set the env variables name as it automaticaly get
 })
 
 const queries = {
-  getAllTweets : async() => await prismaClient.tweet.findMany({orderBy: {createdAt: "desc"}}),
+  getAllTweets : () => tweetService.getAllTweets(),
+
 
   getSignedURLForTweet: async(parent: any, {imageName, imageType}: {imageName: string, imageType: string}, ctx: graphqlContext) => {
     if(!ctx.user || !ctx.user.id) throw new Error("Unauthenticated");
@@ -40,13 +36,10 @@ const mutations = {
   createTweet: async (parent: any, { payload }: { payload: CreateTweetPayload }, ctx: graphqlContext) => {
       if (!ctx.user) throw new Error("You are not authenticated");
       
-      const tweet = await prismaClient.tweet.create({
-        data: {
-          content: payload.content,
-          imageURL: payload.imageURL,
-          author: {connect: {id: ctx.user.id}},
-        }
-      });
+      const tweet = await tweetService.createTweet({
+        ...payload,
+        userId: ctx.user.id,
+      })
       return tweet;
     },
   };
@@ -54,7 +47,8 @@ const mutations = {
   const extraResolvers = {
     Tweet : {
       author: async (parent: Tweet) =>
-        await prismaClient.user.findUnique({where: {id: parent.authorId}})
+        await UserService.getUserById(parent.authorId),
+
     }
   }
 
