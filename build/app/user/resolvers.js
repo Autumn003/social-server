@@ -69,6 +69,29 @@ const extraResolvers = {
             });
             return res.map((follow) => follow.following);
         }),
+        recommendations: (parent, arg, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!ctx.user)
+                return [];
+            const myyFollowings = yield db_1.prismaClient.follows.findMany({
+                where: { follower: { id: ctx.user.id }
+                },
+                include: {
+                    following: {
+                        include: { followers: { include: { following: true } } }
+                    }
+                }
+            });
+            const users = [];
+            for (const followings of myyFollowings) {
+                for (const followingOfMyFollowedUser of followings.following.followers) {
+                    if (followingOfMyFollowedUser.following.id !== ctx.user.id &&
+                        myyFollowings.findIndex((e) => (e === null || e === void 0 ? void 0 : e.followerId) === followingOfMyFollowedUser.following.id) < 0) {
+                        users.push(followingOfMyFollowedUser.following);
+                    }
+                }
+            }
+            return users;
+        })
     }
 };
 exports.resolvers = { queries, mutations, extraResolvers };
