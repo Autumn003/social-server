@@ -21,6 +21,9 @@ class tweetService {
     }
 
     public static async createTweet(data: CreateTweetPayload){
+        const rateLimitFlag = await redisClient.get(`RATELIMIT:TWEET:${data.userId}`);
+        if(rateLimitFlag) throw new Error("Please wait...")
+
         const tweet = await prismaClient.tweet.create({
             data: {
                 content: data.content,
@@ -28,6 +31,7 @@ class tweetService {
                 author:{ connect: {id: data.userId}}
             }
         });
+        await redisClient.setex(`RATELIMIT:TWEET:${data.userId}`, 10, 1)
         await redisClient.del("ALL_TWEETS");
         return tweet;
     }
