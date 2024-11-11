@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const db_1 = require("../../clients/db");
 const user_1 = __importDefault(require("../../services/user"));
+const redis_1 = require("../../clients/redis");
 const queries = {
     verifyGoogleToken: (parent_1, _a) => __awaiter(void 0, [parent_1, _a], void 0, function* (parent, { token }) {
         const resToken = user_1.default.verifyGoogleAuthToken(token);
@@ -32,19 +33,21 @@ const queries = {
 };
 const mutations = {
     followUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
-        var _b;
+        var _b, _c;
         const from = (_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id;
         if (!from)
             throw new Error("Unauthenticated!");
         yield user_1.default.followUser(from, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${(_c = ctx.user) === null || _c === void 0 ? void 0 : _c.id}`);
         return true;
     }),
     unfollowUser: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { to }, ctx) {
-        var _b;
+        var _b, _c;
         const from = (_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id;
         if (!from)
             throw new Error("Unauthenticated!");
         yield user_1.default.unfollowUser(from, to);
+        yield redis_1.redisClient.del(`RECOMMENDED_USER:${(_c = ctx.user) === null || _c === void 0 ? void 0 : _c.id}`);
         return true;
     })
 };
@@ -72,6 +75,9 @@ const extraResolvers = {
         recommendations: (parent, arg, ctx) => __awaiter(void 0, void 0, void 0, function* () {
             if (!ctx.user)
                 return [];
+            const cachedRecommendation = yield redis_1.redisClient.get(`RECOMMENDED_USER:${ctx.user.id}`);
+            if (cachedRecommendation)
+                return JSON.parse(cachedRecommendation);
             const myFollowings = yield db_1.prismaClient.follows.findMany({
                 where: {
                     follower: { id: ctx.user.id },
@@ -91,6 +97,7 @@ const extraResolvers = {
                     }
                 }
             }
+            yield redis_1.redisClient.set(`RECOMMENDED_USER:${ctx.user.id}`, JSON.stringify(users));
             return users;
         })
     }
