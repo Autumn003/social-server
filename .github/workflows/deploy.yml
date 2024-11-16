@@ -6,37 +6,50 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Check Out Repo
-        uses: actions/checkout@v2
 
+    steps:
+      # Step 1: Check Out Repository
+      - name: Check Out Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to Docker Hub
       - name: Log in to Docker Hub
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v2
+      # Step 3: Build and Push Docker Image to Docker Hub
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: hemant003/social-server:latest
 
-      - name: Verify Pushed Image
+      # Step 4: Verify Docker Image Was Pushed
+      - name: Verify Pushed Docker Image
         run: docker pull hemant003/social-server:latest
 
+      # Step 5: Deploy to AWS EC2 Server
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v0.1.9
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            # Pull the latest image
             sudo docker pull hemant003/social-server:latest
+
+            # Stop the running container (if any)
             sudo docker stop social-backend || true
+
+            # Remove the old container
             sudo docker rm social-backend || true
+
+            # Run the new container
             sudo docker run -d --name social-backend -p 8005:8000 hemant003/social-server:latest
