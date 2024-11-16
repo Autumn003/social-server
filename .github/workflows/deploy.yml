@@ -52,4 +52,4 @@ jobs:
             sudo docker rm social-backend || true
 
             # Run the new container
-            sudo docker run -d --name social-backend -p 8005:8000 hemant003/social-server:latest
+            sudo docker run -d --name social-backend -p 4000:4000 hemant003/social-server:latest
