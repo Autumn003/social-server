@@ -36,7 +36,12 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "${{ secrets.DOTENV_FILE }}" > .env
             sudo docker pull hemant003/social-server:latest
             sudo docker stop social-backend || true
             sudo docker rm social-backend || true
-            sudo docker run -d --name social-backend -p 8000:8000 hemant003/social-server:latest
+            sudo docker run -d \
+              --name social-backend \
+              -p 8000:8000 \
+              --env-file .env \
+              hemant003/social-server:latest
