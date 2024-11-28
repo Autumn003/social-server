@@ -23,7 +23,8 @@ model User {
   followers  Follows[] @relation("follower")
   followings Follows[] @relation("following")
 
-  tweets Tweet[]
+  tweets    Tweet[]
+  bookmarks Bookmark[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -46,6 +47,20 @@ model Tweet {
   authorId String
   author   User    @relation(fields: [authorId], references: [id])
 
+  bookmarks Bookmark[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Bookmark {
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  tweetId String
+  tweet   Tweet  @relation(fields: [tweetId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, tweetId])
 }
