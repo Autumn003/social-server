@@ -17,10 +17,16 @@ const queries = {
     
         const user = UserService.getUserById(id);
         return user;
-      },
+    },
 
     getUserById: async (parent: any, {id}:{id:string}, ctx: graphqlContext) =>
-        UserService.getUserById(id)
+        UserService.getUserById(id),
+
+    getUserBookmarks: async (parent: any, args: any, ctx: graphqlContext) => {
+      const userId = ctx.user?.id;
+      if (!userId) throw new Error("Unauthenticated!");
+      return UserService.getBookmarks(userId);
+    },
 }
 
 const mutations = {
@@ -40,7 +46,21 @@ const mutations = {
         await UserService.unfollowUser(from, to);
         await redisClient.del(`RECOMMENDED_USER:${ctx.user?.id}`);
         return true;
-    }
+    },
+
+    createBookmark: async (parent: any, { tweetId }: { tweetId: string }, ctx: graphqlContext) => {
+      const userId = ctx.user?.id;
+      if (!userId) throw new Error("Unauthenticated!");
+      return UserService.createBookmark(userId, tweetId);
+    },
+
+    deleteBookmark: async (parent: any, { tweetId }: { tweetId: string }, ctx: graphqlContext) => {
+      const userId = ctx.user?.id;
+      if (!userId) throw new Error("Unauthenticated!");
+      await UserService.deleteBookmark(userId, tweetId);
+      return true;
+    },
+
 }
 
 const extraResolvers = {
@@ -105,7 +125,14 @@ const extraResolvers = {
               );
 
             return users
-        }
+        },
+
+        bookmarks: async (parent: User) =>
+          await prismaClient.bookmark.findMany({
+              where: { userId: parent.id },
+              include: { tweet: true },
+          }).then((bookmarks) => bookmarks.map((b) => b.tweet)),
+
     }
 }
 

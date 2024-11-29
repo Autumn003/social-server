@@ -1,6 +1,7 @@
 export const queries = `#graphql
     verifyGoogleToken(token: String!): String
     getCurrentUser: User
-
     getUserById(id: String!): User
+
+    getUserBookmarks: [Tweet]!
 `;

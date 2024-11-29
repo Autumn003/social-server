@@ -97,6 +97,38 @@ class UserService {
         await redisClient.del(`USER:${to}`);
         return unfollow;
     }
+
+    public static async createBookmark(userId: string, tweetId: string) {
+        const bookmark = await prismaClient.bookmark.create({
+            data: {
+                userId,
+                tweetId,
+            },
+            include: {tweet: true, user: true}
+        });
+        return {
+            ...bookmark,
+            id: `${bookmark.userId}_${bookmark.tweetId}`
+        };
+    }
+
+    public static async deleteBookmark(userId: string, tweetId: string) {
+        const deletedBookmark = await prismaClient.bookmark.delete({
+            where: {
+                userId_tweetId: { userId, tweetId },
+            },
+        });
+        return deletedBookmark;
+    }
+
+    public static async getBookmarks(userId: string) {
+        const bookmarks = await prismaClient.bookmark.findMany({
+            where: { userId },
+            include: { tweet: true },
+        });
+        return bookmarks.map((bookmark) => bookmark.tweet);
+    }
+
 }
 
 export default UserService;

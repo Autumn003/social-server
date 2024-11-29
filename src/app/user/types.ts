@@ -1,5 +1,6 @@
 export const types = `#graphql
     scalar Date
+
     type User {
         id: ID!
         firstName: String!
@@ -10,9 +11,16 @@ export const types = `#graphql
 
         followers: [User]
         followings: [User]
-
         recommendations: [User]
-
         tweets: [Tweet]
+
+        bookmarks: [Tweet]
+    }
+
+    type Bookmark {
+        id: ID!
+        user: User!
+        tweet: Tweet!
+        createdAt: Date!
     }
 `;
