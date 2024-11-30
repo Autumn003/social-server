@@ -10,6 +10,7 @@ export const types = `#graphql
         content: String!
         imageURL: String
         createdAt: Date
+        bookmarkedBy: [User]
 
         author: User
     }

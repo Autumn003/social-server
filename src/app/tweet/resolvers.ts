@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import UserService from "../../services/user";
 import tweetService, { CreateTweetPayload } from "../../services/tweet";
+import { prismaClient } from "../../clients/db";
 
 
 
@@ -48,7 +49,12 @@ const mutations = {
     Tweet : {
       author: async (parent: Tweet) =>
         await UserService.getUserById(parent.authorId),
-
+      
+      bookmarkedBy: async (parent: Tweet) =>
+        await prismaClient.bookmark.findMany({
+            where: { tweetId: parent.id },
+            include: { user: true },
+        }).then((bookmarks) => bookmarks.map((b) => b.user)),
     }
   }
 
