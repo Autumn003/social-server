@@ -125,6 +125,7 @@ class UserService {
         const bookmarks = await prismaClient.bookmark.findMany({
             where: { userId },
             include: { tweet: true },
+            orderBy: { createdAt: "desc"}
         });
         return bookmarks.map((bookmark) => bookmark.tweet);
     }
